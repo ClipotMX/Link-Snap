@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LinkSnap</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0d0f;
+    --surface: #161618;
+    --surface2: #1e1e21;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0f0f0;
+    --muted: #888;
+    --accent: #7c5cfc;
+    --accent2: #a78bfa;
+    --accent-glow: rgba(124,92,252,0.2);
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --mono: 'DM Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--display); min-height: 100vh; }
+
+  /* HEADER */
+  header { display: flex; align-items: center; justify-content: space-between; padding: 20px 32px; border-bottom: 1px solid var(--border); }
+  .logo { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent2); }
+  .header-meta { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+  .domain-badge { background: var(--surface2); border: 1px solid var(--border); padding: 4px 12px; border-radius: 99px; font-size: 12px; color: var(--accent2); font-family: var(--mono); }
+
+  /* HERO INPUT */
+  .hero { padding: 48px 32px 32px; text-align: center; }
+  .hero h1 { font-size: clamp(28px, 5vw, 48px); font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 8px; }
+  .hero h1 em { font-style: normal; color: var(--accent2); }
+  .hero p { color: var(--muted); font-size: 14px; margin-bottom: 32px; font-family: var(--mono); }
+
+  .shorten-form { display: flex; gap: 0; max-width: 680px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border2); border-radius: 14px; overflow: hidden; box-shadow: 0 0 0 4px var(--accent-glow); transition: box-shadow 0.2s; }
+  .shorten-form:focus-within { box-shadow: 0 0 0 4px rgba(124,92,252,0.35); border-color: var(--accent); }
+  .shorten-form input { flex: 1; background: transparent; border: none; outline: none; padding: 18px 20px; font-size: 15px; color: var(--text); font-family: var(--mono); }
+  .shorten-form input::placeholder { color: #444; }
+  .shorten-form button { background: var(--accent); color: #fff; border: none; padding: 0 28px; font-size: 14px; font-weight: 700; font-family: var(--display); cursor: pointer; letter-spacing: 0.5px; transition: background 0.15s; white-space: nowrap; }
+  .shorten-form button:hover { background: var(--accent2); }
+
+  /* CUSTOM SLUG */
+  .slug-row { display: flex; align-items: center; gap: 10px; max-width: 680px; margin: 12px auto 0; justify-content: center; }
+  .slug-row span { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .slug-row input { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 13px; font-family: var(--mono); color: var(--accent2); outline: none; width: 160px; transition: border-color 0.15s; }
+  .slug-row input:focus { border-color: var(--accent); }
+  .slug-row input::placeholder { color: #444; }
+
+  /* TABLE SECTION */
+  .table-section { padding: 0 32px 32px; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-top: 8px; }
+  .section-header h2 { font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+  .btn-new { background: var(--green); color: #000; border: none; padding: 9px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; font-family: var(--display); cursor: pointer; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; box-shadow: 0 0 16px rgba(34,197,94,0.25); transition: all 0.15s; }
+  .btn-new:hover { background: #16a34a; box-shadow: 0 0 24px rgba(34,197,94,0.4); }
+  .btn-new::before { content: '+'; font-size: 18px; line-height: 1; }
+
+  .links-table { width: 100%; border-collapse: collapse; }
+  .links-table th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
+  .links-table td { padding: 14px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  .links-table tr:last-child td { border-bottom: none; }
+  .links-table tr:hover td { background: var(--surface2); }
+
+  .short-link { font-family: var(--mono); color: var(--accent2); font-size: 13px; display: flex; align-items: center; gap: 8px; }
+  .short-link a { color: inherit; text-decoration: none; }
+  .short-link a:hover { text-decoration: underline; }
+  .original-link { color: var(--muted); font-family: var(--mono); font-size: 12px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .click-count { font-weight: 700; font-size: 16px; color: var(--text); font-family: var(--mono); }
+  .click-count span { font-size: 11px; color: var(--muted); font-weight: 400; }
+
+  .tag { display: inline-block; padding: 3px 8px; border-radius: 5px; font-size: 11px; font-family: var(--mono); }
+  .tag-active { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+  .tag-inactive { background: rgba(136,136,136,0.1); color: var(--muted); border: 1px solid var(--border); }
+
+  .row-actions { display: flex; gap: 6px; }
+  .btn-sm { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 5px 12px; border-radius: 6px; font-size: 12px; font-family: var(--display); font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .btn-sm:hover { border-color: var(--border2); }
+  .btn-sm.view { border-color: var(--accent); color: var(--accent2); }
+  .btn-sm.view:hover { background: var(--accent-glow); }
+  .btn-sm.del { border-color: rgba(239,68,68,0.3); color: var(--red); }
+  .btn-sm.del:hover { background: rgba(239,68,68,0.1); }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); display: none; align-items: flex-start; justify-content: flex-end; z-index: 1000; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-left: 1px solid var(--border2); width: 420px; height: 100vh; overflow-y: auto; padding: 28px; display: flex; flex-direction: column; gap: 20px; animation: slideIn 0.22s ease; }
+  @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  .modal-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .modal-title { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+  .modal-subtitle { font-size: 12px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+  .btn-close { background: var(--surface2); border: 1px solid var(--border); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; color: var(--muted); font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .btn-close:hover { color: var(--text); }
+
+  /* STATS CARDS */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .stat-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+  .stat-card .value { font-size: 24px; font-weight: 800; font-family: var(--mono); letter-spacing: -1px; }
+  .stat-card.accent { border-color: rgba(124,92,252,0.25); background: var(--accent-glow); }
+  .stat-card.accent .value { color: var(--accent2); }
+  .stat-card.green { border-color: rgba(34,197,94,0.2); background: rgba(34,197,94,0.05); }
+  .stat-card.green .value { color: var(--green); }
+
+  .section-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+
+  /* REFERRERS */
+  .ref-list { display: flex; flex-direction: column; gap: 6px; }
+  .ref-item { display: flex; align-items: center; gap: 10px; }
+  .ref-name { font-family: var(--mono); font-size: 12px; color: var(--text); flex: 1; }
+  .ref-bar-wrap { flex: 2; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .ref-bar { height: 100%; background: var(--accent); border-radius: 3px; }
+  .ref-count { font-family: var(--mono); font-size: 12px; color: var(--muted); min-width: 28px; text-align: right; }
+
+  /* BROWSER / DEVICE */
+  .chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font-size: 12px; font-family: var(--mono); display: flex; align-items: center; gap: 6px; }
+  .chip-label { color: var(--muted); }
+  .chip-val { color: var(--text); font-weight: 500; }
+
+  /* EDIT SECTION */
+  .edit-group { display: flex; flex-direction: column; gap: 6px; }
+  .edit-group label { font-size: 12px; color: var(--muted); }
+  .edit-group input { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: var(--mono); font-size: 13px; outline: none; transition: border-color 0.15s; }
+  .edit-group input:focus { border-color: var(--accent); }
+  .modal-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-primary { background: var(--accent); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; font-family: var(--display); cursor: pointer; transition: background 0.15s; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-copy { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; font-family: var(--display); cursor: pointer; transition: all 0.15s; }
+  .btn-copy:hover { border-color: var(--border2); }
+  .btn-delete { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: var(--red); padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; font-family: var(--display); cursor: pointer; transition: all 0.15s; }
+  .btn-delete:hover { background: rgba(239,68,68,0.2); }
+
+  .empty-state { text-align: center; padding: 64px 32px; color: var(--muted); }
+  .empty-state .big { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; font-family: var(--mono); }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface); border: 1px solid var(--border2); padding: 12px 24px; border-radius: 10px; font-size: 13px; font-family: var(--mono); opacity: 0; transition: all 0.25s; pointer-events: none; z-index: 2000; color: var(--green); }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+  /* CLICK LOG */
+  .click-log { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
+  .log-item { background: var(--surface2); border-radius: 6px; padding: 8px 10px; font-size: 11px; font-family: var(--mono); color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+  .log-item strong { color: var(--text); font-size: 12px; }
+
+  @media (max-width: 640px) {
+    .hero { padding: 32px 16px 24px; }
+    .table-section { padding: 0 16px 32px; }
+    header { padding: 16px; }
+    .modal { width: 100vw; }
+    .links-table th:nth-child(2), .links-table td:nth-child(2) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Link<span>Snap</span></div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span class="domain-badge" id="currentDomain">cargando...</span>
+    <span class="header-meta">v1.0 — analytics mode</span>
+  </div>
+</header>
+
+<div class="hero">
+  <h1>Acorta. <em>Analiza.</em> Escala.</h1>
+  <p>// pega tu URL larga, obtén un enlace rastreable</p>
+  <div class="shorten-form">
+    <input type="text" id="longUrl" placeholder="https://ejemplo.com/pagina-muy-larga/con-parametros?utm=..." />
+    <button onclick="shortenUrl()">ACORTAR</button>
+  </div>
+  <div class="slug-row">
+    <span id="domainPreview">app.io/</span>
+    <input type="text" id="customSlug" placeholder="slug-personalizado" maxlength="32" />
+    <span style="font-size:11px;color:#555;">(opcional)</span>
+  </div>
+</div>
+
+<div class="table-section">
+  <div class="section-header">
+    <h2>Tus enlaces <span id="linkCount" style="color:var(--accent2);"></span></h2>
+    <button class="btn-new" onclick="scrollToInput()">Nuevo enlace</button>
+  </div>
+
+  <div id="emptyState" class="empty-state">
+    <div class="big">⚡</div>
+    <p>sin enlaces todavía — empieza acortando uno arriba</p>
+  </div>
+
+  <table class="links-table" id="linksTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>Enlace corto</th>
+        <th>Destino</th>
+        <th>Clicks</th>
+        <th>Creado</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="linksBody"></tbody>
+  </table>
+</div>
+
+<!-- MODAL / SIDEBAR -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOnOverlay(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modalTitle">Estadísticas</div>
+        <div class="modal-subtitle" id="modalSubtitle"></div>
+      </div>
+      <button class="btn-close" onclick="closeModal()">×</button>
+    </div>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BASE = window.location.hostname || 'linksnap.app';
+document.getElementById('currentDomain').textContent = BASE;
+document.getElementById('domainPreview').textContent = BASE + '/';
+
+let links = JSON.parse(localStorage.getItem('linksnap_links') || '[]');
+let currentLinkId = null;
+
+function randStr(len = 6) {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  return Array.from({length: len}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+function getSlug() {
+  const custom = document.getElementById('customSlug').value.trim().replace(/[^a-zA-Z0-9\-_]/g, '');
+  return custom || randStr(6);
+}
+
+function slugExists(slug) {
+  return links.some(l => l.slug === slug);
+}
+
+async function shortenUrl() {
+  const url = document.getElementById('longUrl').value.trim();
+  if (!url || !url.startsWith('http')) { showToast('⚠ Ingresa una URL válida (debe empezar con http)'); return; }
+  let slug = getSlug();
+  const custom = document.getElementById('customSlug').value.trim();
+  if (custom && slugExists(slug)) { showToast('⚠ Ese slug ya existe, elige otro'); return; }
+  if (!custom && slugExists(slug)) slug = randStr(7);
+
+  const link = {
+    id: Date.now().toString(),
+    slug,
+    original: url,
+    created: new Date().toISOString(),
+    active: true,
+    clicks: [],
+    totalClicks: 0
+  };
+
+  links.unshift(link);
+  save();
+  render();
+  document.getElementById('longUrl').value = '';
+  document.getElementById('customSlug').value = '';
+  showToast('✓ Enlace creado: ' + BASE + '/' + slug);
+}
+
+function recordClick(linkId, meta) {
+  const link = links.find(l => l.id === linkId);
+  if (!link) return;
+  link.totalClicks = (link.totalClicks || 0) + 1;
+  link.clicks = link.clicks || [];
+  link.clicks.push({ ts: new Date().toISOString(), ...meta });
+  save();
+  render();
+}
+
+function save() {
+  localStorage.setItem('linksnap_links', JSON.stringify(links));
+}
+
+function relTime(iso) {
+  const d = new Date(iso);
+  const diff = (Date.now() - d) / 1000;
+  if (diff < 60) return 'hace ' + Math.floor(diff) + 's';
+  if (diff < 3600) return 'hace ' + Math.floor(diff/60) + 'm';
+  if (diff < 86400) return 'hace ' + Math.floor(diff/3600) + 'h';
+  return d.toLocaleDateString('es-MX', {day:'2-digit', month:'short'});
+}
+
+function render() {
+  const body = document.getElementById('linksBody');
+  const empty = document.getElementById('emptyState');
+  const table = document.getElementById('linksTable');
+  document.getElementById('linkCount').textContent = links.length ? '(' + links.length + ')' : '';
+  if (!links.length) { empty.style.display = 'block'; table.style.display = 'none'; return; }
+  empty.style.display = 'none';
+  table.style.display = 'table';
+  body.innerHTML = links.map(link => `
+    <tr>
+      <td>
+        <div class="short-link">
+          <a href="#" onclick="simulateClick('${link.id}');return false;">${BASE}/${link.slug}</a>
+        </div>
+      </td>
+      <td><div class="original-link" title="${link.original}">${link.original}</div></td>
+      <td><div class="click-count">${link.totalClicks || 0} <span>clicks</span></div></td>
+      <td style="font-size:12px;color:var(--muted);font-family:var(--mono);">${relTime(link.created)}</td>
+      <td><span class="tag ${link.active ? 'tag-active' : 'tag-inactive'}">${link.active ? 'activo' : 'inactivo'}</span></td>
+      <td>
+        <div class="row-actions">
+          <button class="btn-sm view" onclick="openStats('${link.id}')">Ver stats</button>
+          <button class="btn-sm" onclick="copyLink('${link.id}')">Copiar</button>
+          <button class="btn-sm del" onclick="deleteLink('${link.id}')">×</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function simulateClick(linkId) {
+  const link = links.find(l => l.id === linkId);
+  if (!link) return;
+  const refs = ['twitter.com','instagram.com','facebook.com','linkedin.com','whatsapp.com','direct','t.co','reddit.com','youtube.com','tiktok.com'];
+  const browsers = ['Chrome','Safari','Firefox','Edge','Samsung Browser'];
+  const devices = ['Desktop','Mobile','Tablet'];
+  const sources = ['organic','social','referral','direct','email'];
+
+  let ip = 'desconocida';
+  try {
+    const r = await fetch('https://api.ipify.org?format=json');
+    const d = await r.json();
+    ip = d.ip;
+  } catch(e) {}
+
+  const ref = refs[Math.floor(Math.random() * refs.length)];
+  const browser = browsers[Math.floor(Math.random() * browsers.length)];
+  const device = devices[Math.floor(Math.random() * devices.length)];
+  const source = sources[Math.floor(Math.random() * sources.length)];
+  const ua = navigator.userAgent;
+  const detectedBrowser = ua.includes('Chrome') ? 'Chrome' : ua.includes('Firefox') ? 'Firefox' : ua.includes('Safari') ? 'Safari' : ua.includes('Edge') ? 'Edge' : browser;
+  const detectedDevice = /Mobile|Android|iPhone|iPad/.test(ua) ? 'Mobile' : 'Desktop';
+
+  recordClick(linkId, {
+    referrer: ref,
+    browser: detectedBrowser,
+    device: detectedDevice,
+    source,
+    ip,
+    action: 'click'
+  });
+  showToast('✓ Click registrado — redirigiendo a ' + link.original.substring(0,40) + '...');
+  setTimeout(() => window.open(link.original, '_blank'), 400);
+}
+
+function openStats(id) {
+  const link = links.find(l => l.id === id);
+  if (!link) return;
+  currentLinkId = id;
+  document.getElementById('modalTitle').textContent = BASE + '/' + link.slug;
+  document.getElementById('modalSubtitle').textContent = link.original.length > 50 ? link.original.substring(0,50) + '...' : link.original;
+
+  const clicks = link.clicks || [];
+  const total = clicks.length;
+  const today = clicks.filter(c => new Date(c.ts).toDateString() === new Date().toDateString()).length;
+
+  const refs = {};
+  clicks.forEach(c => { refs[c.referrer] = (refs[c.referrer] || 0) + 1; });
+  const sortedRefs = Object.entries(refs).sort((a,b) => b[1]-a[1]).slice(0,6);
+
+  const browsers = {};
+  clicks.forEach(c => { browsers[c.browser] = (browsers[c.browser] || 0) + 1; });
+  const devices = {};
+  clicks.forEach(c => { devices[c.device] = (devices[c.device] || 0) + 1; });
+  const sources = {};
+  clicks.forEach(c => { sources[c.source] = (sources[c.source] || 0) + 1; });
+  const ips = [...new Set(clicks.map(c => c.ip).filter(Boolean))];
+
+  const refsHTML = sortedRefs.length ? sortedRefs.map(([ref, count]) => `
+    <div class="ref-item">
+      <span class="ref-name">${ref}</span>
+      <div class="ref-bar-wrap"><div class="ref-bar" style="width:${Math.round((count/total)*100)}%"></div></div>
+      <span class="ref-count">${count}</span>
+    </div>
+  `).join('') : '<p style="font-size:12px;color:var(--muted);font-family:var(--mono);">sin datos aún — comparte el enlace</p>';
+
+  const browserChips = Object.entries(browsers).map(([b,c]) => `<div class="chip"><span class="chip-label">${b}</span><span class="chip-val">${c}</span></div>`).join('');
+  const deviceChips = Object.entries(devices).map(([d,c]) => `<div class="chip"><span class="chip-label">${d}</span><span class="chip-val">${c}</span></div>`).join('');
+  const sourceChips = Object.entries(sources).map(([s,c]) => `<div class="chip"><span class="chip-label">${s}</span><span class="chip-val">${c}</span></div>`).join('');
+
+  const logHTML = clicks.length ? [...clicks].reverse().slice(0,8).map(c => `
+    <div class="log-item">
+      <strong>${c.referrer || 'direct'} · ${c.device} · ${c.browser}</strong>
+      <span>IP: ${c.ip || 'n/a'} · ${c.source || '—'} · ${relTime(c.ts)}</span>
+    </div>
+  `).join('') : '<p style="font-size:12px;color:var(--muted);font-family:var(--mono);">sin clicks registrados</p>';
+
+  const ipListHTML = ips.length ? ips.slice(0,5).map(ip => `<div class="chip"><span class="chip-val">${ip}</span></div>`).join('') : '<p style="font-size:12px;color:var(--muted);">sin IPs registradas</p>';
+
+  document.getElementById('modalContent').innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card accent">
+        <div class="label">Total clicks</div>
+        <div class="value">${total}</div>
+      </div>
+      <div class="stat-card green">
+        <div class="label">Hoy</div>
+        <div class="value">${today}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Fuentes únicas</div>
+        <div class="value">${Object.keys(refs).length}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">IPs únicas</div>
+        <div class="value">${ips.length}</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-label">Fuentes de tráfico</div>
+    <div class="ref-list">${refsHTML}</div>
+
+    <div class="divider"></div>
+    <div class="section-label">Navegadores</div>
+    <div class="chip-list">${browserChips || '<span style="font-size:12px;color:var(--muted);">sin datos</span>'}</div>
+
+    <div class="section-label" style="margin-top:12px;">Dispositivos</div>
+    <div class="chip-list">${deviceChips || '<span style="font-size:12px;color:var(--muted);">sin datos</span>'}</div>
+
+    <div class="section-label" style="margin-top:12px;">Canales</div>
+    <div class="chip-list">${sourceChips || '<span style="font-size:12px;color:var(--muted);">sin datos</span>'}</div>
+
+    <div class="divider"></div>
+    <div class="section-label">IPs registradas</div>
+    <div class="chip-list">${ipListHTML}</div>
+
+    <div class="divider"></div>
+    <div class="section-label">Log de clicks recientes</div>
+    <div class="click-log">${logHTML}</div>
+
+    <div class="divider"></div>
+    <div class="section-label">Editar enlace</div>
+    <div class="edit-group">
+      <label>Slug personalizado</label>
+      <input type="text" id="editSlug" value="${link.slug}" placeholder="nuevo-slug" />
+    </div>
+    <div class="edit-group">
+      <label>URL destino</label>
+      <input type="text" id="editUrl" value="${link.original}" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="saveEdit('${id}')">Guardar cambios</button>
+      <button class="btn-copy" onclick="copyLink('${id}')">Copiar enlace</button>
+      <button class="btn-copy" onclick="toggleActive('${id}')">${link.active ? 'Desactivar' : 'Activar'}</button>
+      <button class="btn-delete" onclick="deleteLink('${id}');closeModal()">Eliminar</button>
+    </div>
+  `;
+
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); currentLinkId = null; }
+function closeModalOnOverlay(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
+
+function saveEdit(id) {
+  const link = links.find(l => l.id === id);
+  if (!link) return;
+  const newSlug = document.getElementById('editSlug').value.trim().replace(/[^a-zA-Z0-9\-_]/g,'');
+  const newUrl = document.getElementById('editUrl').value.trim();
+  if (!newSlug) { showToast('⚠ Slug no puede estar vacío'); return; }
+  if (newSlug !== link.slug && slugExists(newSlug)) { showToast('⚠ Ese slug ya existe'); return; }
+  if (!newUrl.startsWith('http')) { showToast('⚠ URL inválida'); return; }
+  link.slug = newSlug;
+  link.original = newUrl;
+  save();
+  render();
+  closeModal();
+  showToast('✓ Enlace actualizado');
+}
+
+function deleteLink(id) {
+  if (!confirm('¿Eliminar este enlace y todas sus estadísticas?')) return;
+  links = links.filter(l => l.id !== id);
+  save();
+  render();
+  showToast('Enlace eliminado');
+}
+
+function toggleActive(id) {
+  const link = links.find(l => l.id === id);
+  if (!link) return;
+  link.active = !link.active;
+  save();
+  render();
+  openStats(id);
+}
+
+function copyLink(id) {
+  const link = links.find(l => l.id === id);
+  if (!link) return;
+  const fullUrl = window.location.origin + '/' + link.slug;
+  navigator.clipboard.writeText(fullUrl).then(() => {
+    recordClick(id, { referrer: 'clipboard', browser: getBrowser(), device: getDevice(), source: 'copy', ip: '', action: 'copy' });
+    showToast('✓ Copiado: ' + fullUrl);
+  }).catch(() => showToast('✓ ' + fullUrl));
+}
+
+function getBrowser() {
+  const ua = navigator.userAgent;
+  if (ua.includes('Edg')) return 'Edge';
+  if (ua.includes('Chrome')) return 'Chrome';
+  if (ua.includes('Firefox')) return 'Firefox';
+  if (ua.includes('Safari')) return 'Safari';
+  return 'Otro';
+}
+
+function getDevice() {
+  return /Mobile|Android|iPhone|iPad/.test(navigator.userAgent) ? 'Mobile' : 'Desktop';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function scrollToInput() {
+  document.getElementById('longUrl').focus();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+document.getElementById('longUrl').addEventListener('keydown', e => {
+  if (e.key === 'Enter') shortenUrl();
+});
+
+render();
+</script>
+</body>
+</html>

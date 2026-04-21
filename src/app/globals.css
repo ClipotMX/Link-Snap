@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-syne: 'Syne', sans-serif;
+  --font-dm-mono: 'DM Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: #0d0d0f;
+  color: #f0f0f0;
+  font-family: var(--font-syne), sans-serif;
+  min-height: 100vh;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #161618; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* Recharts custom */
+.recharts-tooltip-wrapper { outline: none; }
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: rgba(255,255,255,0.05);
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-accent hover:bg-accent2 text-white font-bold font-display px-5 py-2.5 rounded-lg text-sm transition-colors cursor-pointer border-0;
+  }
+  .btn-secondary {
+    @apply bg-surface2 hover:bg-surface text-white font-bold font-display px-5 py-2.5 rounded-lg text-sm transition-colors cursor-pointer border border-white/10;
+  }
+  .btn-danger {
+    @apply bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold font-display px-5 py-2.5 rounded-lg text-sm transition-colors cursor-pointer border border-red-500/20;
+  }
+  .input-base {
+    @apply bg-surface2 border border-white/10 rounded-lg px-4 py-2.5 text-sm font-mono text-white placeholder:text-white/20 outline-none focus:border-accent transition-colors w-full;
+  }
+  .card {
+    @apply bg-surface border border-white/10 rounded-xl p-5;
+  }
+  .stat-card {
+    @apply bg-surface2 border border-white/10 rounded-xl p-4;
+  }
+  .tag {
+    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-mono;
+  }
+  .tag-active {
+    @apply bg-green-500/10 text-green-400 border border-green-500/20;
+  }
+  .tag-inactive {
+    @apply bg-white/5 text-white/30 border border-white/10;
+  }
+}
