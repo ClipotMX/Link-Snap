@@ -13,7 +13,7 @@ export function createClient() {
         setAll(cookiesToSet: { name: string; value: string; options: any }[]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
+              cookieStore.set(name, value, { ...options, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' })
             )
           } catch {}
         },

@@ -18,7 +18,7 @@ export async function middleware(request: NextRequest) {
             request,
           })
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, { ...options, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' })
           )
         },
       },
@@ -34,7 +34,13 @@ export async function middleware(request: NextRequest) {
   if (!user && isDashboard) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    return NextResponse.redirect(url)
+    // IMPORTANTE: Devolver la respuesta de Supabase para que las cookies se limpien si es necesario
+    const response = NextResponse.redirect(url)
+    // Copiar las cookies de la respuesta de Supabase a la redirección
+    supabaseResponse.cookies.getAll().forEach(cookie => {
+      response.cookies.set(cookie.name, cookie.value)
+    })
+    return response
   }
 
   // Redirect logged-in users away from /login
