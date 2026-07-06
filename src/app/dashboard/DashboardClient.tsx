@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -17,8 +17,8 @@ export default function DashboardClient({ links: initialLinks, totals, userEmail
   const [links, setLinks] = useState(initialLinks)
   const [search, setSearch] = useState('')
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const supabase = useMemo(createClient, [])
   const router = useRouter()
-  const supabase = createClient()
 
   const filtered = links.filter(l =>
     l.slug.toLowerCase().includes(search.toLowerCase()) ||
@@ -33,13 +33,15 @@ export default function DashboardClient({ links: initialLinks, totals, userEmail
   }
 
   async function toggleActive(link: LinkStats) {
-    await supabase.from('links').update({ active: !link.active }).eq('id', link.id)
+    const { error } = await supabase.from('links').update({ active: !link.active }).eq('id', link.id)
+    if (error) { alert('Error al actualizar: ' + error.message); return }
     setLinks(prev => prev.map(l => l.id === link.id ? { ...l, active: !l.active } : l))
   }
 
   async function deleteLink(id: string) {
     if (!confirm('¿Eliminar este enlace y todas sus estadísticas?')) return
-    await supabase.from('links').delete().eq('id', id)
+    const { error } = await supabase.from('links').delete().eq('id', id)
+    if (error) { alert('Error al eliminar: ' + error.message); return }
     setLinks(prev => prev.filter(l => l.id !== id))
   }
 

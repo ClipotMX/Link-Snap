@@ -13,7 +13,7 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set({ name, value, ...options, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' }))
           supabaseResponse = NextResponse.next({
             request,
           })
@@ -25,7 +25,13 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  let user: any = null
+  try {
+    const result = await supabase.auth.getUser()
+    user = result?.data?.user ?? null
+  } catch {
+    user = null
+  }
 
   // Protect /dashboard routes
   const isDashboard = request.nextUrl.pathname.startsWith('/dashboard')
@@ -34,20 +40,18 @@ export async function middleware(request: NextRequest) {
   if (!user && isDashboard) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    // IMPORTANTE: Devolver la respuesta de Supabase para que las cookies se limpien si es necesario
-    const response = NextResponse.redirect(url)
-    // Copiar las cookies de la respuesta de Supabase a la redirección
-    supabaseResponse.cookies.getAll().forEach(cookie => {
-      response.cookies.set(cookie.name, cookie.value)
-    })
-    return response
+    return NextResponse.redirect(url)
   }
 
   // Redirect logged-in users away from /login
   if (user && isLogin) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+    const response = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach(cookie => {
+      response.cookies.set(cookie.name, cookie.value)
+    })
+    return response
   }
 
   return supabaseResponse

@@ -12,11 +12,6 @@ interface Props {
 export default async function SlugPage({ params }: Props) {
   const { slug } = params
 
-  // Skip internal Next.js paths
-  if (['dashboard', 'login', 'api', '_next', 'favicon.ico'].includes(slug)) {
-    notFound()
-  }
-
   const supabase = createClient()
 
   // Look up the slug
@@ -62,7 +57,7 @@ export default async function SlugPage({ params }: Props) {
     source,
     action: 'click',
     ip,
-  }).then(() => {}) // intentionally not awaited — redirect is priority
+  }).then(() => {}, (err: unknown) => console.error('Click insert failed:', err)) // intentionally not awaited — redirect is priority
 
   // 307 Temporary Redirect (preserves method, doesn't get cached permanently)
   redirect(link.original_url)

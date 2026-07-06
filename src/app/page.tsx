@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { generateSlug, getShortUrl } from '@/lib/utils'
+import { generateSlug, getBaseUrl, getShortUrl } from '@/lib/utils'
 import Link from 'next/link'
 
 export default function HomePage() {
@@ -15,8 +15,8 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
-  const base = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+  const supabase = useMemo(createClient, [])
+  const base = getBaseUrl()
 
   async function handleShorten() {
     setError(null)
@@ -33,6 +33,12 @@ export default function HomePage() {
     setLoading(true)
 
     const slug = customSlug.trim().replace(/[^a-zA-Z0-9\-_]/g, '') || generateSlug()
+
+    if (['dashboard', 'login', 'api', '_next', 'favicon.ico'].includes(slug)) {
+      setError('Ese slug no está disponible')
+      setLoading(false)
+      return
+    }
 
     // Check slug uniqueness
     if (customSlug.trim()) {

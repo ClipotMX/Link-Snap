@@ -98,7 +98,9 @@ create trigger links_updated_at
 -- ─────────────────────────────────────────────
 
 -- Aggregated click counts per link
-create or replace view public.link_stats as
+create or replace view public.link_stats
+with (security_invoker = true)
+as
 select
   l.id,
   l.user_id,

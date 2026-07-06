@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -48,7 +48,8 @@ export default function StatsClient({
   const [editSlug, setEditSlug] = useState(link.slug)
   const [editUrl, setEditUrl] = useState(link.original_url)
   const [editTitle, setEditTitle] = useState(link.title || '')
-  const supabase = createClient()
+  const [editError, setEditError] = useState<string | null>(null)
+  const supabase = useMemo(createClient, [])
   const router = useRouter()
 
   const chartData = period === 'day' ? clicksByDay : period === 'week' ? clicksByWeek : clicksByMonth
@@ -61,13 +62,30 @@ export default function StatsClient({
   }
 
   async function saveEdit() {
+    setEditError(null)
     const slug = editSlug.trim().replace(/[^a-zA-Z0-9\-_]/g, '')
     const url = editUrl.trim()
     if (!slug || !url.startsWith('http')) return
 
-    await supabase.from('links').update({
+    const { data: existing } = slug !== link.slug ? await supabase
+      .from('links')
+      .select('id')
+      .eq('slug', slug)
+      .single() : { data: null }
+
+    if (existing) {
+      setEditError('Ese slug ya existe, elige otro')
+      return
+    }
+
+    const { error } = await supabase.from('links').update({
       slug, original_url: url, title: editTitle.trim() || null
     }).eq('id', link.id)
+
+    if (error) {
+      setEditError('Error al guardar: ' + error.message)
+      return
+    }
 
     setEditing(false)
     router.refresh()
@@ -75,12 +93,20 @@ export default function StatsClient({
 
   async function deleteLink() {
     if (!confirm('¿Eliminar este enlace y todas sus estadísticas permanentemente?')) return
-    await supabase.from('links').delete().eq('id', link.id)
+    const { error } = await supabase.from('links').delete().eq('id', link.id)
+    if (error) {
+      alert('Error al eliminar: ' + error.message)
+      return
+    }
     router.push('/dashboard')
   }
 
   async function toggleActive() {
-    await supabase.from('links').update({ active: !link.active }).eq('id', link.id)
+    const { error } = await supabase.from('links').update({ active: !link.active }).eq('id', link.id)
+    if (error) {
+      alert('Error al actualizar: ' + error.message)
+      return
+    }
     router.refresh()
   }
 
@@ -136,6 +162,11 @@ export default function StatsClient({
                 <input value={editUrl} onChange={e => setEditUrl(e.target.value)} placeholder="URL destino" className="input-base col-span-1 md:col-span-1" />
                 <input value={editTitle} onChange={e => setEditTitle(e.target.value)} placeholder="Título / etiqueta" className="input-base" />
               </div>
+              {editError && (
+                <p className="text-red-400 text-xs font-mono bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                  ⚠ {editError}
+                </p>
+              )}
               <div className="flex gap-2">
                 <button onClick={saveEdit} className="btn-primary text-xs px-4 py-2">Guardar</button>
                 <button onClick={() => setEditing(false)} className="btn-secondary text-xs px-4 py-2">Cancelar</button>
