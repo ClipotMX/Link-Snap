@@ -12,14 +12,15 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set({ name, value, ...options, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' }))
-          supabaseResponse = NextResponse.next({
-            request,
+        setAll(cookiesToSet, headers) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            const { encode, partitioned, ...safeOpts } = options || {}
+            request.cookies.set(name, value)
+            supabaseResponse.cookies.set(name, value, { ...safeOpts, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' })
           })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, { ...options, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' })
-          )
+          if (headers) {
+            Object.entries(headers).forEach(([key, val]) => supabaseResponse.headers.set(key, val))
+          }
         },
       },
     }
@@ -33,7 +34,6 @@ export async function middleware(request: NextRequest) {
     user = null
   }
 
-  // Protect /dashboard routes
   const isDashboard = request.nextUrl.pathname.startsWith('/dashboard')
   const isLogin = request.nextUrl.pathname === '/login'
 
@@ -43,15 +43,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Redirect logged-in users away from /login
   if (user && isLogin) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
-    const response = NextResponse.redirect(url)
-    supabaseResponse.cookies.getAll().forEach(cookie => {
-      response.cookies.set(cookie.name, cookie.value)
-    })
-    return response
+    return NextResponse.redirect(url)
   }
 
   return supabaseResponse

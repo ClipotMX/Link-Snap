@@ -15,8 +15,14 @@ export function createClient() {
         },
         setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            const expires = options?.expires ? new Date(Number(options.expires) * 1000).toUTCString() : undefined
-            document.cookie = `${name}=${value}; path=/; ${expires ? `expires=${expires}; ` : 'Max-Age=31536000; '}${options?.secure ? 'secure; ' : ''}${options?.sameSite ? `samesite=${options.sameSite}` : ''}`
+            const parts = [`${name}=${value}`, 'path=/']
+            if (options?.maxAge) parts.push(`max-age=${options.maxAge}`)
+            if (options?.expires) parts.push(`expires=${new Date(options.expires).toUTCString()}`)
+            if (options?.domain) parts.push(`domain=${options.domain}`)
+            if (options?.secure) parts.push('secure')
+            if (options?.sameSite) parts.push(`samesite=${options.sameSite}`)
+            if (options?.priority) parts.push(`priority=${options.priority}`)
+            document.cookie = parts.join('; ')
           })
         },
       },
